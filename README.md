@@ -209,3 +209,7 @@ For production, consider moving credentials to environment variables using `pyth
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
+
+## Data Source 
+
+- https://www.kaggle.com/datasets/solomonameh/spotify-music-dataset (just for high-popularity data)
