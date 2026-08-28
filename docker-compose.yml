@@ -1,0 +1,24 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:15
+    container_name: spotify-postgres
+    environment:
+      POSTGRES_DB: spotify_db        # Database name
+      POSTGRES_USER: lpl             # Username (matches alembic.ini)
+      POSTGRES_PASSWORD: lpl01470    # Password (matches alembic.ini)
+    ports:
+      - "5434:5432"                  # Host port:Container port (mapped to 5434)
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: spotify-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+
+volumes:
+  pg_data:

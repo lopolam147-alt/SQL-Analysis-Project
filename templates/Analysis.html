@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>🎵 Spotify Data Analysis Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            background: #f0f2f5;
+        }
+        .header {
+            background: #1DB954;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .chart-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        .chart-box h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .chart-container {
+            width: 100%;
+            height: 400px;
+        }
+        .custom-text {
+            margin-top: 12px;
+            padding: 10px 14px;
+            background: #f8f9fa;
+            border-left: 4px solid #1DB954;
+            border-radius: 4px;
+            font-size: 14px;
+            color: #2c3e50;
+            line-height: 1.6;
+            min-height: 40px;
+        }
+        .custom-text:empty::before {
+            content: '📝 Add your text description here...';
+            color: #aaa;
+        }
+        .error-msg {
+            color: #d32f2f;
+            padding: 10px;
+            background: #ffeeee;
+            border-radius: 4px;
+        }
+        .loading-msg {
+            color: #666;
+            padding: 10px;
+            text-align: center;
+        }
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            .row6-wrapper {
+                grid-template-columns: 1fr !important;
+            }
+        }
+        /* Full-width charts */
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        .full-width .chart-container {
+            height: 500px;
+        }
+        /* Section title */
+        .section-title {
+            grid-column: 1 / -1;
+            background: #e8f5e9;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 20px;
+            font-weight: bold;
+            color: #1DB954;
+            margin: 10px 0 -10px 0;
+        }
+        .conclusion-box {
+            background: #e8f5e9;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 6px solid #1DB954;
+            margin: 20px 0;
+            grid-column: 1 / -1;
+        }
+        .conclusion-box h2 {
+            margin-top: 0;
+        }
+
+        /* ===== 6th-row: Narrow on the left, wide on the right. ===== */
+        .row6-wrapper {
+            grid-column: 1 / -1;
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+        }
+        .row6-wrapper .chart-box {
+            margin: 0;
+        }
+        .row6-wrapper .chart-container {
+            height: 450px;
+        }
+
+        #chart-artist-genre {
+            width: 100%;
+            height: 450px;
+        }
+    </style>
+</head>
+<body>
+<div class="header">🎵 Spotify Data Analysis Dashboard</div>
+
+<!-- Top introduction -->
+<div class="dashboard-grid" style="display:block; max-width:1400px; margin:0 auto; padding:0 30px;">
+    <div class="custom-text" style="margin-bottom:20px;">
+        This dashboard analyzes a dataset of 1,437 high‑popularity Spotify tracks from 2024 (primarily Western music). 
+        We assume a new artist in early 2025 has released fewer than 5 tracks, so we use this data to understand current trends 
+        and provide recommendations for new artists.
+    </div>
+</div>
+
+<div class="dashboard-grid">
+
+    <!-- Row 1: Annual & Monthly trends -->
+    <div class="chart-box">
+        <h3>📈 Annual Release Trends</h3>
+        <div id="chart-year" class="chart-container"><div class="loading-msg">loading…</div></div>
+        <div class="custom-text">
+            The number of high‑popularity tracks released between 2022–2024 is lower than in earlier years, 
+            suggesting a preference for older songs among listeners.
+        </div>
+    </div>
+    <div class="chart-box">
+        <h3>📊 Monthly High‑Popularity Tracks (2024)</h3>
+        <div id="chart-latest3yearmonth" class="chart-container"><div class="loading-msg">loading…</div></div>
+        <div class="custom-text">
+            In 2024, high‑popularity tracks are more concentrated in Autumn (August–October), 
+            indicating a favorable release window.
+        </div>
+    </div>
+
+    <!-- Row 2: Collaboration & Solo -->
+    <div class="chart-box">
+        <h3>🤝 Collaboration Frequency (2023–2024)</h3>
+        <div id="chart-collab" class="chart-container"><div class="loading-msg">loading…</div></div>
+        <div class="custom-text">
+            In 2023–2024, the top collaborators among high‑popularity artists are Bad Bunny, Peso Pluma, and Feid (each with 7 collaborations).
+        </div>
+    </div>
+    <div class="chart-box">
+        <h3>🎤 Solo Song Frequency (2023–2024)</h3>
+        <div id="chart-solo-songs" class="chart-container"><div class="loading-msg">loading…</div></div>
+        <div class="custom-text">
+            The most prolific solo artists are Sabrina Carpenter (8), Shubh (7), and Gunna (5). 
+            Overall, collaborations outnumber solo tracks among the top 20 artists in this period.
+        </div>
+    </div>
+
+    <!-- Row 3: Top 10 Genres (all data vs 2023-2024) -->
+    <div class="chart-box">
+        <h3>🔥 Top 10 Genres (All Data)</h3>
+        <div id="chart-genre-pop" class="chart-container"><div class="loading-msg">loading…</div></div>
+        <div class="custom-text">
+            Overall, Pop (275), Rock (198), and Hip‑Hop (191) are the dominant genres.
+        </div>
+    </div>
+    <div class="chart-box">
+        <h3>🔥 Top 10 Genres (2023–2024)</h3>
+        <div id="chart-genre-pop-2324" class="chart-container"><div class="loading-msg">loading…</div></div>
+        <div class="custom-text">
+            In 2023–2024, Hip‑Hop (76), Latin (75), and Gaming (65) lead the charts, 
+            showing a shift away from traditional Pop.
+        </div>
+    </div>
+
+    <!-- Row 4: Tempo Distribution (full width) -->
+    <div class="chart-box">
+        <h3>📊 Tempo Distribution</h3>
+        <div id="chart-tempo-pop" class="chart-container"><div class="loading-msg">loading…</div></div>
+        <div class="custom-text">
+            High‑popularity songs tend to have a moderately high tempo. The most common range is 120–140 BPM, 
+            which corresponds to an energetic, upbeat feel.
+        </div>
+    </div>
+    <div>
+        
+    </div>
+    <!-- Row 5: Liveness (left) & Energy (right) -->
+    <div class="chart-box">
+        <h3>📊 Liveness vs Popularity</h3>
+        <div id="chart-liveness-pop" class="chart-container"><div class="loading-msg">loading…</div></div>
+        <div class="custom-text">
+            Most high‑popularity tracks have low liveness (0–0.4), suggesting they were recorded in quiet studios.
+        </div>
+    </div>
+    <div class="chart-box">
+        <h3>🎶 Energy vs Popularity</h3>
+        <div id="chart-energy-pop" class="chart-container"><div class="loading-msg">loading…</div></div>
+        <div class="custom-text">
+            High‑popularity tracks generally exhibit high energy (0.4–1.0), indicating they are fast, loud, and engaging.
+        </div>
+    </div>
+
+    <!-- Row 6: Artist Analysis (Top 10 left, Preferred Genre right) -->
+    <div class="section-title">🎯 Artist Analysis (2023–2024)</div>
+
+        <div class="row6-wrapper">
+            <div class="chart-box">
+                <h3>⭐ Top 10 Artists by Song Count</h3>
+                <div id="chart-artist" class="chart-container">
+                    <div class="loading-msg">loading…</div>
+                </div>
+                <div class="custom-text">
+                    The top 3 artists are Bad Bunny (9), Sabrina Carpenter (8), and Peso Pluma (7).
+                </div>
+            </div>
+
+            <div class="chart-box">
+                <h3>🔥 Preferred Genre of Each Top‑10 Artist</h3>
+                <div id="chart-artist-genre" class="chart-container"></div>
+                <div class="custom-text">
+                    Among the top‑10 artists, Latin and Hip‑Hop are the most preferred genres,
+                    indicating a strong current trend in these styles.
+                </div>
+            </div>
+
+    <!-- Conclusion -->
+    <div class="conclusion-box">
+        <h2>📌 Key Insights for 2025 (New Artist Strategy)</h2>
+        <ul>
+            <li><strong>Release Timing</strong>: Autumn (August-October) shows the highest popularity, making it the optimal season to release new music.</li>
+            <li><strong>Collaborations vs. Solos</strong>: Collaborations are more frequent among top artists. For new artists, collaborating with established names can boost visibility, provided they already have some baseline popularity.</li>
+            <li><strong>Tempo</strong>: Avoid extremely slow or fast tempos --> stick to the normal range</li>
+            <li><strong>Production Quality</strong>: High-popularity tracks are often recorded in quiet studios (low liveness) with high energy, suggesting a polished, immersive production style.</li>
+            <li><strong>Genre Saturation</strong>: While pop, hip-hop, latin, gaming, and ambient dominate 2024, they are becoming saturated. Artists may find better opportunities in less crowded genres like rock, R&B, or punk, which had hits in 2024 but fewer releases in 2023-2024.</li>
+            <li><strong>Artist Preference</strong>: Top artists in 2023-2024 lean heavily toward latin and hip-hop, increasing competition in these genres.</li>
+        </ul>
+    </div>
+
+</div>
+
+<script>
+    // ---------- Render charts ----------
+    function renderChart(containerId, rows, xIndex, yIndices, chartType = 'bar', xLabel = '', yLabel = '', genreIndex = null) {
+        const chartDom = document.getElementById(containerId);
+        if (!chartDom) return;
+        const chart = echarts.init(chartDom);
+        if (!rows || rows.length === 0) {
+            chart.setOption({ title: { text: 'No data available', left: 'center', top: 'center' } });
+            return;
+        }
+
+        // ---------- Pie Chart ----------
+        if (chartType === 'pie') {
+            const yIdx = Array.isArray(yIndices) ? yIndices[0] : yIndices;
+            const pieData = rows.map(row => ({
+                name: String(row[xIndex] || ''),
+                value: parseFloat(row[yIdx]) || 0
+            }));
+            const option = {
+                tooltip: { trigger: 'item', formatter: '{a} <br/>{b}: {c} ({d}%)' },
+                legend: { orient: 'vertical', left: 'left' },
+                series: [{
+                    name: yLabel || 'Distribution',
+                    type: 'pie',
+                    radius: ['40%', '70%'],
+                    avoidLabelOverlap: false,
+                    itemStyle: { borderRadius: 10, borderColor: '#fff', borderWidth: 2 },
+                    label: { show: true, formatter: '{b}\n{d}%' },
+                    emphasis: { label: { show: true } },
+                    data: pieData
+                }]
+            };
+            chart.setOption(option);
+            window.addEventListener('resize', () => chart.resize());
+            return;
+        }
+
+        // ---------- Scatter Plot ----------
+        if (chartType === 'scatter') {
+            const yIdx = Array.isArray(yIndices) ? yIndices[0] : yIndices;
+            const scatterData = rows.map(row => [
+                parseFloat(row[xIndex] || 0),
+                parseFloat(row[yIdx] || 0)
+            ]);
+            const option = {
+                tooltip: {
+                    trigger: 'item',
+                    formatter: function(params) {
+                        return xLabel + ': ' + params.value[0] + '<br/>' + yLabel + ': ' + params.value[1];
+                    }
+                },
+                xAxis: { name: xLabel || 'X-axis', nameLocation: 'center', nameGap: 20 },
+                yAxis: { name: yLabel || 'Y-axis', nameLocation: 'center', nameGap: 20 },
+                series: [{
+                    type: 'scatter',
+                    data: scatterData,
+                    symbolSize: 8,
+                    itemStyle: { color: '#1DB954', opacity: 0.7, borderColor: '#fff', borderWidth: 1 },
+                    emphasis: { itemStyle: { opacity: 1, shadowBlur: 10, shadowColor: 'rgba(0,0,0,0.3)' } }
+                }]
+            };
+            chart.setOption(option);
+            window.addEventListener('resize', () => chart.resize());
+            return;
+        }
+
+        // ---------- Grouped bar chart ----------
+        if (chartType === 'groupedBar') {
+                const artistCol = xIndex;
+                const genreCol = genreIndex || 1;
+                const valueCol = Array.isArray(yIndices) ? yIndices[0] : yIndices;
+
+                const artists = [];
+                const genres = [];
+                const map = new Map();
+                rows.forEach(row => {
+                    const artist = String(row[artistCol]);
+                    const genre = String(row[genreCol]);
+                    const value = parseFloat(row[valueCol]) || 0;
+                    if (!map.has(artist)) {
+                        map.set(artist, {});
+                        artists.push(artist);
+                    }
+                    if (!map.get(artist)[genre]) {
+                        map.get(artist)[genre] = 0;
+                    }
+                    map.get(artist)[genre] += value;
+                    if (!genres.includes(genre)) genres.push(genre);
+                });
+
+                const colorPalette = ['#1DB954', '#FF6B6B', '#4ECDC4', '#FFB347', '#6C5CE7', '#FF8A80', '#A29BFE', '#FDCB6E',
+                    '#E17055', '#00CEC9'
+                ];
+                const series = genres.map((genre, idx) => {
+                    const data = artists.map(artist => map.get(artist)[genre] || 0);
+                    return {
+                        name: genre,
+                        type: 'bar',
+                        data: data,
+                        barWidth: 9,
+                        itemStyle: { color: colorPalette[idx % colorPalette.length] }
+                    };
+                });
+
+                const option = {
+                    tooltip: {
+                        trigger: 'axis',
+                        axisPointer: { type: 'shadow' },
+                        formatter: function(params) {
+                            let html = `<strong>${params[0].name}</strong><br/>`;
+                            params.forEach(p => {
+                                html += `${p.marker} ${p.seriesName}: ${p.value}<br/>`;
+                            });
+                            return html;
+                        }
+                    },
+                    legend: {
+                        data: genres,
+                        itemWidth: 10,
+                        itemHeight: 10,
+                        textStyle: { fontSize: 11 }
+                    },
+                    xAxis: {
+                        type: 'category',
+                        data: artists,
+                        axisLabel: {
+                            rotate: 45,
+                            fontSize: 10,
+                            interval: 0
+                        }
+                    },
+                    yAxis: { type: 'value', name: yLabel || 'Number of songs' },
+                    series: series,
+                    // ===== 添加 dataZoom 滚动条（滑块 + 内部缩放） =====
+                    dataZoom: [{
+                        type: 'slider',
+                        start: 0,
+                        end: 55,
+                        height: 20,
+                        bottom: 10,
+                        borderColor: '#1DB954',
+                        fillerColor: 'rgba(29, 185, 84, 0.2)',
+                        handleStyle: { color: '#1DB954' }
+                    }, {
+                        type: 'inside',
+                        start: 0,
+                        end: 100
+                    }],
+                    animation: true,
+                    animationDuration: 800,
+                    // 为 dataZoom 留出底部空间
+                    grid: { left: '12%', right: '12%', bottom: '28%', top: '15%' }
+                };
+                chart.setOption(option);
+                window.addEventListener('resize', () => chart.resize());
+                return;
+            }
+
+        // ---------- Default Bar Chart / Line Chart ----------
+        const yIdxArray = Array.isArray(yIndices) ? yIndices : [yIndices];
+        const xData = rows.map(row => String(row[xIndex] || ''));
+        const yData = yIdxArray.map(idx => rows.map(row => parseFloat(row[idx]) || 0));
+
+        const series = yData.map((data, i) => ({
+            name: Array.isArray(yLabel) ? yLabel[i] : (i === 0 ? yLabel : ''),
+            type: chartType,
+            data: data,
+            smooth: true,
+            symbol: 'circle',
+            symbolSize: 6,
+            emphasis: { focus: 'series', lineStyle: { width: 3 } },
+            label: { show: false },
+            itemStyle: { color: i === 0 ? '#1DB954' : '#FF6B6B' },
+            barWidth: '50%'
+        }));
+
+        const option = {
+            tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+            legend: { data: series.map(s => s.name).filter(Boolean) },
+            dataZoom: [
+                { type: 'slider', start: 0, end: 100, height: 16, bottom: 8 },
+                { type: 'inside', start: 0, end: 100 }
+            ],
+            xAxis: { type: 'category', data: xData, axisLabel: { rotate: 25, fontSize: 11 } },
+            yAxis: { type: 'value', name: Array.isArray(yLabel) ? yLabel.join(' / ') : yLabel },
+            series: series,
+            animation: true,
+            animationDuration: 800,
+            grid: { left: '12%', right: '12%', bottom: '20%', top: '15%' }
+        };
+        chart.setOption(option);
+        window.addEventListener('resize', () => chart.resize());
+    }
+
+    // ---------- Fetch with error handling ----------
+    function fetchAndRender(sql, containerId, xIndex, yIndices, chartType = 'bar', xLabel = '', yLabel = '', genreIndex = null) {
+        const container = document.getElementById(containerId);
+        if (container) container.innerHTML = '<div class="loading-msg">⏳ loading…</div>';
+
+        fetch('/api/query/execute', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sql: sql })
+        })
+        .then(async res => {
+            if (!res.ok) {
+                let errMsg = '';
+                try { const errData = await res.json(); errMsg = errData.detail || errData.message || ''; } catch (_) {}
+                throw new Error(`HTTP ${res.status} ${res.statusText} ${errMsg}`.trim());
+            }
+            return res.json();
+        })
+        .then(data => {
+            if (data.error) throw new Error(data.error);
+            if (data.columns && data.rows) {
+                renderChart(containerId, data.rows, xIndex, yIndices, chartType, xLabel, yLabel, genreIndex);
+            } else {
+                throw new Error('The data format returned by the backend is abnormal');
+            }
+        })
+        .catch(err => {
+            console.error('Request failed:', err);
+            if (container) container.innerHTML = `<div class="error-msg">❌ ${err.message}</div>`;
+        });
+    }
+    
+    // ---------- Page load ----------
+    window.onload = function() {
+        const queries = [
+            // Annual trends
+            { sql: "SELECT release_year, COUNT(*) FROM spotify_tracks WHERE release_year IS NOT NULL GROUP BY release_year ORDER BY release_year", id: 'chart-year', x: 0, y: 1, type: 'bar', labelX: 'Year', labelY: 'Number of songs' },
+            // Monthly trends (2024)
+            { sql: "SELECT release_month, COUNT(*) FROM spotify_tracks where release_year IN (2024) GROUP BY release_month ORDER BY release_month", id: 'chart-latest3yearmonth', x: 0, y: 1, type: 'bar', labelX: 'Month', labelY: 'Number of songs' },
+            // Collaboration frequency
+            { sql: `SELECT replace(unnest(string_to_array(track_artist, ', ')), '|', '') AS artist, COUNT(*) AS total_collaborations FROM spotify_tracks WHERE track_artist IS NOT NULL AND track_artist != '' AND release_year IN (2023, 2024) AND array_length(string_to_array(track_artist, ', '), 1) > 1 GROUP BY artist ORDER BY total_collaborations DESC LIMIT 20`, id: 'chart-collab', x: 0, y: 1, type: 'bar', labelX: 'Artist', labelY: 'Collaborations' },
+            // Solo frequency
+            { sql: `SELECT replace(unnest(string_to_array(track_artist, ', ')), '|', '') AS artist, COUNT(*) AS song_count FROM spotify_tracks WHERE release_year IN (2023, 2024) AND track_artist IS NOT NULL AND track_artist != '' AND array_length(string_to_array(track_artist, ', '), 1) = 1 GROUP BY artist ORDER BY song_count DESC LIMIT 20`, id: 'chart-solo-songs', x: 0, y: 1, type: 'bar', labelX: 'Artist', labelY: 'Solo songs' },
+            // Top 10 genres (all data)
+            { sql: "SELECT playlist_genre, COUNT(*) AS song_count FROM spotify_tracks GROUP BY playlist_genre ORDER BY song_count DESC LIMIT 10", id: 'chart-genre-pop', x: 0, y: 1, type: 'bar', labelX: 'Genre', labelY: 'Number of songs' },
+            // Top 10 genres (2023-2024)
+            { sql: "SELECT playlist_genre, COUNT(*) AS song_count FROM spotify_tracks WHERE release_year IN (2023, 2024) GROUP BY playlist_genre ORDER BY song_count DESC LIMIT 10", id: 'chart-genre-pop-2324', x: 0, y: 1, type: 'bar', labelX: 'Genre', labelY: 'Number of songs' },
+            // Tempo distribution
+            { sql: `SELECT CASE WHEN tempo < 60 THEN '0-60' WHEN tempo < 80 THEN '60-80' WHEN tempo < 100 THEN '80-100' WHEN tempo < 120 THEN '100-120' WHEN tempo < 140 THEN '120-140' WHEN tempo < 160 THEN '140-160' WHEN tempo < 180 THEN '160-180' ELSE '180+' END AS tempo_range, COUNT(*) AS song_count FROM spotify_tracks WHERE tempo IS NOT NULL GROUP BY tempo_range ORDER BY MIN(tempo)`, id: 'chart-tempo-pop', x: 0, y: 1, type: 'bar', labelX: 'Tempo (BPM)', labelY: 'Number of songs' },
+            // Liveness scatter
+            { sql: "SELECT liveness, track_popularity FROM spotify_tracks WHERE liveness IS NOT NULL AND track_popularity IS NOT NULL ORDER BY liveness", id: 'chart-liveness-pop', x: 0, y: 1, type: 'scatter', labelX: 'Liveness', labelY: 'Popularity' },
+            // Energy scatter
+            { sql: "SELECT energy, track_popularity FROM spotify_tracks WHERE energy IS NOT NULL AND track_popularity IS NOT NULL ORDER BY energy", id: 'chart-energy-pop', x: 0, y: 1, type: 'scatter', labelX: 'Energy', labelY: 'Popularity' },
+            // Top 10 artists (2023-2024)
+            { sql: `SELECT replace(unnest(string_to_array(track_artist, ', ')), '|', '') AS artist, COUNT(*) AS song_count FROM spotify_tracks WHERE release_year IN (2023, 2024) AND track_artist IS NOT NULL AND track_artist != '' GROUP BY artist HAVING COUNT(*) >= 3 ORDER BY song_count DESC LIMIT 10`, id: 'chart-artist', x: 0, y: 1, type: 'bar', labelX: 'Artist', labelY: 'Number of songs' },
+            // Artist genre preference (grouped bar)
+            { sql: `SELECT a.artist, s.playlist_genre AS genre, COUNT(*) AS song_count, MAX(COUNT(*)) OVER (PARTITION BY a.artist) AS max_song_count FROM spotify_tracks s CROSS JOIN LATERAL (SELECT replace(unnest(string_to_array(s.track_artist, ', ')), '|', '') AS artist) a WHERE s.track_artist IS NOT NULL AND s.track_artist != '' AND s.playlist_genre IS NOT NULL AND a.artist IN (SELECT artist FROM (SELECT replace(unnest(string_to_array(t.track_artist, ', ')), '|', '') AS artist, COUNT(*) AS total_songs FROM spotify_tracks t WHERE t.track_artist IS NOT NULL AND t.track_artist != '' and release_year IN (2023, 2024) GROUP BY artist HAVING COUNT(*) >= 3 ORDER BY total_songs DESC LIMIT 10) top_artists) GROUP BY a.artist, s.playlist_genre ORDER BY max_song_count DESC, a.artist, genre`, id: 'chart-artist-genre', x: 0, y: 2, genreCol: 1, type: 'groupedBar', labelX: 'Artist', labelY: 'Number of songs' }
+        ];
+
+        queries.forEach(q => {
+            fetchAndRender(q.sql, q.id, q.x, q.y, q.type || 'bar', q.labelX, q.labelY, q.genreCol);
+        });
+    };
+</script>
+</body>
+</html>
