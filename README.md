@@ -125,7 +125,7 @@ python csv_loader.py
 Alternatively, use Alembic migrations:
 
 ```bash
-alembic upgrade head
+python -m alembic upgrade head 
 python csv_loader.py
 ```
 
