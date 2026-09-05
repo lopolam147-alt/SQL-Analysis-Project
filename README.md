@@ -142,7 +142,7 @@ python data/clean_spotify_data.py
 ### 5. Start the application
 
 ```bash
-python -m uvicorn main:app --reload --host 0.0.0.0 --port 8080
+python -m uvicorn main:app --reload
 ```
 
 Open the dashboard at [http://localhost:8080](http://localhost:8080).
